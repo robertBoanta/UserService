@@ -23,6 +23,8 @@ public class AuthController {
     @GetMapping("/userData")
     public Map<String,Object> getUserData(@AuthenticationPrincipal Jwt jwt){
        return authService.getUserData(jwt);
+
+
     }
 
     @PutMapping("/updateAdresses")
