@@ -25,7 +25,7 @@ spec:
   ports:
     - port: 8092
       targetPort: 8092
-      nodePort: 30090
+      nodePort: 30092
       protocol: TCP
       name: http
   selector:
