@@ -14,10 +14,10 @@ import java.util.Map;
 @Service
 public class AuthService {
 
-    @Value("${auth0.clientId}")
+    @Value("${auth0.client-id}")
     private String clientId;
 
-    @Value("${auth0.clientSecret}")
+    @Value("${auth0.client-secret}")
     private String clientSecret;
 
     @Value("${auth0.domain}")
