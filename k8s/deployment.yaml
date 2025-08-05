@@ -16,7 +16,7 @@ spec:
         - name: user-service
           image: IMAGE_PLACEHOLDER
           ports:
-            - containerPort: 8090
+            - containerPort: 8092
           startupProbe:
             httpGet:
               path: /actuator/health

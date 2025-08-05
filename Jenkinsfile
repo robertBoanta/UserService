@@ -43,7 +43,7 @@ pipeline {
         sh """
           sed -i 's|IMAGE_PLACEHOLDER|$DOCKER_IMAGE|g' k8s/deployment.yaml
           kubectl apply -f k8s/
-          kubectl scale deployment cart-service --replicas=1 || true
+          kubectl scale deployment user-service --replicas=1 || true
         """
       }
     }
