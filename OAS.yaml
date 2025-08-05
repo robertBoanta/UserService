@@ -1,0 +1,295 @@
+openapi: 3.1.0
+info:
+  title: User Account Service API
+  description: API for managing user account data including addresses and educational institution information through Auth0 JWT authentication
+  version: 1.0.0
+  contact:
+    name: User Account Service
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.example.com
+    description: Production server
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/auth/userData:
+    get:
+      summary: Get user data
+      description: Retrieves comprehensive user data including profile information, roles, and addresses from JWT token claims
+      operationId: getUserData
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserData'
+              example:
+                userId: "auth0|64a1234567890abcdef12345"
+                email: "user@example.com"
+                name: "John Doe"
+                emailVerified: true
+                roles: ["student", "user"]
+                institutieInvatamant: "Universitatea Bucuresti"
+                numePrenume: "Ion Popescu"
+                adreseLivrare:
+                  - strada: "Str. Universitatii nr. 1"
+                    oras: "Bucuresti"
+                    codPostal: "010091"
+                    judet: "Bucuresti"
+                adresaFacturare:
+                  strada: "Str. Universitatii nr. 1"
+                  oras: "Bucuresti"
+                  codPostal: "010091"
+                  judet: "Bucuresti"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/auth/updateAdresses:
+    put:
+      summary: Update user addresses
+      description: Updates user's delivery addresses, billing address, educational institution, and full name
+      operationId: updateUserAddresses
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAddressesRequest'
+            example:
+              institutieInvatamant: "Universitatea Politehnica Bucuresti"
+              numePrenume: "Maria Ionescu"
+              adreseLivrare:
+                - strada: "Str. Splaiul Independentei nr. 313"
+                  oras: "Bucuresti"
+                  codPostal: "060042"
+                  judet: "Bucuresti"
+                - strada: "Str. Acasa nr. 10"
+                  oras: "Cluj-Napoca"
+                  codPostal: "400001"
+                  judet: "Cluj"
+              adresaFacturare:
+                strada: "Str. Splaiul Independentei nr. 313"
+                oras: "Bucuresti"
+                codPostal: "060042"
+                judet: "Bucuresti"
+      responses:
+        '200':
+          description: Addresses updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Adrese actualizate cu succes."
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from Auth0
+
+  schemas:
+    UserData:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: Unique user identifier from Auth0
+          example: "auth0|64a1234567890abcdef12345"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        name:
+          type: string
+          description: User's display name
+          example: "John Doe"
+        emailVerified:
+          type: boolean
+          description: Whether the user's email has been verified
+          example: true
+        roles:
+          type: array
+          items:
+            type: string
+          description: User's assigned roles
+          example: ["student", "user"]
+        institutieInvatamant:
+          type: string
+          description: Educational institution name
+          example: "Universitatea Bucuresti"
+        numePrenume:
+          type: string
+          description: User's full name in Romanian format
+          example: "Ion Popescu"
+        adreseLivrare:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+          description: List of delivery addresses
+        adresaFacturare:
+          $ref: '#/components/schemas/Address'
+          description: Billing address
+
+    UpdateAddressesRequest:
+      type: object
+      required:
+        - institutieInvatamant
+        - numePrenume
+        - adreseLivrare
+        - adresaFacturare
+      properties:
+        institutieInvatamant:
+          type: string
+          description: Educational institution name
+          example: "Universitatea Politehnica Bucuresti"
+          minLength: 1
+          maxLength: 200
+        numePrenume:
+          type: string
+          description: User's full name in Romanian format
+          example: "Maria Ionescu"
+          minLength: 1
+          maxLength: 100
+        adreseLivrare:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+          description: List of delivery addresses
+          minItems: 1
+          maxItems: 5
+        adresaFacturare:
+          $ref: '#/components/schemas/Address'
+          description: Billing address
+
+    Address:
+      type: object
+      required:
+        - strada
+        - oras
+        - codPostal
+        - judet
+      properties:
+        strada:
+          type: string
+          description: Street address
+          example: "Str. Universitatii nr. 1"
+          minLength: 1
+          maxLength: 200
+        oras:
+          type: string
+          description: City name
+          example: "Bucuresti"
+          minLength: 1
+          maxLength: 100
+        codPostal:
+          type: string
+          description: Postal code
+          example: "010091"
+          pattern: "^[0-9]{6}$"
+        judet:
+          type: string
+          description: County/region name
+          example: "Bucuresti"
+          minLength: 1
+          maxLength: 50
+
+    Error:
+      type: object
+      required:
+        - message
+        - timestamp
+      properties:
+        message:
+          type: string
+          description: Error message
+          example: "Invalid request data"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2025-08-05T10:30:00Z"
+        details:
+          type: string
+          description: Additional error details
+          example: "Field 'institutieInvatamant' is required"
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Invalid request data"
+            timestamp: "2025-08-05T10:30:00Z"
+            details: "Field 'institutieInvatamant' is required"
+
+    Unauthorized:
+      description: Unauthorized - missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Unauthorized access"
+            timestamp: "2025-08-05T10:30:00Z"
+            details: "Valid JWT token required"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Access forbidden"
+            timestamp: "2025-08-05T10:30:00Z"
+            details: "Insufficient permissions for this operation"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Internal server error"
+            timestamp: "2025-08-05T10:30:00Z"
+            details: "An unexpected error occurred while processing the request"
+
+tags:
+  - name: Authentication
+    description: User authentication and account management endpoints

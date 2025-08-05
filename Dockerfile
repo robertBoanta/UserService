@@ -1,47 +1,38 @@
-# Use OpenJDK 17 as base image
-FROM openjdk:17-jdk-slim
+# Multi-stage build for Spring Boot application
+FROM maven:3.9.11-eclipse-temurin-17 AS build
 
 # Set working directory
 WORKDIR /app
 
-# Copy Maven wrapper and pom.xml first for better layer caching
-COPY mvnw .
-COPY mvnw.cmd .
-COPY .mvn .mvn
+# Copy pom.xml and download dependencies (for better caching)
 COPY pom.xml .
-
-# Make mvnw executable
-RUN chmod +x mvnw
-
-# Download dependencies (this layer will be cached if pom.xml doesn't change)
-RUN ./mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 # Copy source code
-COPY src src
+COPY src ./src
 
 # Build the application
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
-# Use a lighter base image for the runtime
-FROM openjdk:17-jre-slim
+# Runtime stage
+FROM eclipse-temurin:17-jre
 
 # Set working directory
 WORKDIR /app
 
-# Copy the JAR file from the build stage
-COPY --from=0 /app/target/UserAccountService-0.0.1-SNAPSHOT.jar app.jar
+# Create non-root user for security
+RUN addgroup --system spring && adduser --system spring --ingroup spring
+USER spring:spring
 
-# Create a non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-RUN chown appuser:appuser app.jar
-USER appuser
+# Copy the built JAR from build stage
+COPY --from=build /app/target/*.jar app.jar
 
-# Expose port 8081 (as configured in application.properties)
-EXPOSE 8081
+# Expose the port your application runs on
+EXPOSE 8092
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8081/actuator/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8090/actuator/health || exit 1
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

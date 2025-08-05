@@ -1,82 +1,43 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-account-service
-  labels:
-    app: user-account-service
+  name: cart-service
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: user-account-service
+      app: user-service
   template:
     metadata:
       labels:
-        app: user-account-service
+        app: user-service
     spec:
       containers:
-      - name: user-account-service
-        image: user-account-service:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 8081
-          name: http
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "kubernetes"
-        - name: AUTH0_AUDIENCE
-          valueFrom:
-            secretKeyRef:
-              name: auth0-secrets
-              key: audience
-        - name: AUTH0_DOMAIN
-          valueFrom:
-            secretKeyRef:
-              name: auth0-secrets
-              key: domain
-        - name: AUTH0_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: auth0-secrets
-              key: client-id
-        - name: AUTH0_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: auth0-secrets
-              key: client-secret
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8081
-          initialDelaySeconds: 60
-          periodSeconds: 30
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /actuator/health/readiness
-            port: 8081
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-      restartPolicy: Always
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: auth0-secrets
-type: Opaque
-stringData:
-  audience: "https://dev-78xqbotqc6dcympy.us.auth0.com/api/v2/"
-  domain: "dev-78xqbotqc6dcympy.us.auth0.com"
-  client-id: "p8XfOpZugQUY9JcM6UnCMTKjrw8vdMcs"
-  client-secret: "-7ikDxOqSzMt7ZDY1vucCfrMIGqGGCR98Ucx4kI8ZDfeORl6Dzk3_c4Ezal-KSFH"
-
+        - name: user-service
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 8090
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8092
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8092
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8092
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
